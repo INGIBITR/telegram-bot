@@ -118,8 +118,18 @@ Telegram::Bot::Client.run(token) do |bot|
           end
         else
           time_difference = Time.now.to_i - dicks.where(:user_id => message.from.id).get([:last_timestamp])[0]
-          if time_difference < delay * 60 * 60
-            bot.api.send_message(chat_id: message.chat.id, text: "#{message.from.first_name}, please wait #{(delay * 60 * 60 - time_difference) / 60 / 60} hours #{(delay * 60 * 60 - time_difference) / 60 / delay} minutes", reply_to_message_id: message.message_id)
+          hours = time_difference / 60 / 60
+          minutes = time_difference / 60
+          while minutes >= 60
+            minutes -= 60
+          end
+          if time_difference < (delay * 60 * 60)
+
+            if hours = 1
+              bot.api.send_message(chat_id: message.chat.id, text: "#{message.from.first_name}, please wait #{hours} hour #{minutes} minutes", reply_to_message_id: message.message_id)
+            else
+              bot.api.send_message(chat_id: message.chat.id, text: "#{message.from.first_name}, please wait #{hours} hours #{minutes} minutes", reply_to_message_id: message.message_id)
+            end
           else
             arrayy = (dicks.where(:user_id => message.from.id).get([:user_id, :amount]))
             # print "#{message.from.id} user prints /dick\n"
@@ -130,7 +140,9 @@ Telegram::Bot::Client.run(token) do |bot|
             #  print "#{me} dick after add\n"
             #bot.api.send_message(chat_id: message.chat.id, text: "#{arrayy}")
             sqlstring = "UPDATE dicks SET amount = #{me} WHERE user_id = #{message.from.id};"
+            sqlstring_time = "UPDATE dicks SET last_timestamp = #{Time.now} WHERE user_id = #{message.from.id};"
             dicks.with_sql_all(sqlstring) ##where(:user_id => message.from.id).update(amount: me, last_timestamp: Time.now.to_i)
+            dicks.with_sql_all(sqlstring_time)
             ##dicks.update(user_id: arrayy[0], amount: me, last_timestamp: Time.now.to_i)
             arrayy = (dicks.where(:user_id => message.from.id).get([:user_id, :amount]))
             #  print "after save #{arrayy}\n"
@@ -160,7 +172,7 @@ Telegram::Bot::Client.run(token) do |bot|
         end
         g.write("pie_grey.png")
         print "#{stats_db}\n\n" #bot.api.send_message(chat_id: message.chat.id, text: "#{stats_db}")
-       
+
         topstats = "Top dicks:\n\n"
 
         array_topstats = Array.new(stats_db.length) { Array.new(2) }
@@ -177,8 +189,8 @@ Telegram::Bot::Client.run(token) do |bot|
         array_topstats.each do |data|
           topstats += "#{data[0]} - #{data[1].to_s}cm \n\n"
         end
-        bot.api.send_photo(chat_id: message.chat.id, photo: Faraday::UploadIO.new("./pie_grey.png", "image/png"), caption:"#{topstats}")
-     # bot.api.send_message(chat_id: message.chat.id, text: "#{topstats}")
+        bot.api.send_photo(chat_id: message.chat.id, photo: Faraday::UploadIO.new("./pie_grey.png", "image/png"), caption: "#{topstats}")
+        # bot.api.send_message(chat_id: message.chat.id, text: "#{topstats}")
       when "/printdb"
         if !(DB.table_exists?(:dicks))
           bot.api.send_message(chat_id: message.chat.id, text: "Your database is empty")
