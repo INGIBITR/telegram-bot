@@ -118,14 +118,17 @@ Telegram::Bot::Client.run(token) do |bot|
           end
         else
           time_difference = Time.now.to_i - dicks.where(:user_id => message.from.id).get([:last_timestamp])[0]
-          hours = time_difference / 60 / 60
-          minutes = time_difference / 60
+          time_to_elapse = (time_difference - (delay * 60 * 60)).abs
+          hours = time_to_elapse / 60 / 60
+          print "\n hours: #{hours}  time difference: #{time_difference} time to elapse #{time_to_elapse}   "
+          minutes = time_to_elapse / 60
+          print "minutes: #{minutes} \n\n"
           while minutes >= 60
             minutes -= 60
           end
           if time_difference < (delay * 60 * 60)
 
-            if hours = 1
+            if hours == 1
               bot.api.send_message(chat_id: message.chat.id, text: "#{message.from.first_name}, please wait #{hours} hour #{minutes} minutes", reply_to_message_id: message.message_id)
             else
               bot.api.send_message(chat_id: message.chat.id, text: "#{message.from.first_name}, please wait #{hours} hours #{minutes} minutes", reply_to_message_id: message.message_id)
@@ -140,7 +143,7 @@ Telegram::Bot::Client.run(token) do |bot|
             #  print "#{me} dick after add\n"
             #bot.api.send_message(chat_id: message.chat.id, text: "#{arrayy}")
             sqlstring = "UPDATE dicks SET amount = #{me} WHERE user_id = #{message.from.id};"
-            sqlstring_time = "UPDATE dicks SET last_timestamp = #{Time.now} WHERE user_id = #{message.from.id};"
+            sqlstring_time = "UPDATE dicks SET last_timestamp = #{Time.now.to_i} WHERE user_id = #{message.from.id};"
             dicks.with_sql_all(sqlstring) ##where(:user_id => message.from.id).update(amount: me, last_timestamp: Time.now.to_i)
             dicks.with_sql_all(sqlstring_time)
             ##dicks.update(user_id: arrayy[0], amount: me, last_timestamp: Time.now.to_i)
